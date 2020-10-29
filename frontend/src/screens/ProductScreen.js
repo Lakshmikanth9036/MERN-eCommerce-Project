@@ -10,7 +10,7 @@ const ProductScreen = ({ match }) => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const { data } = await axios.get(`/proshop/product/${prodId}`);
+      const { data } = await axios.get(`/proshop/products/${prodId}`);
       setProduct(data);
     };
     fetchProduct();

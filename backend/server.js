@@ -1,24 +1,27 @@
-import dotenv from "dotenv"
-import express from 'express';
-import products from "./data/products.js";
+import dotenv from "dotenv";
+import express from "express";
+import colors from "colors";
+import connectDB from "./config/db.js";
+import productRoutes from "./routes/products.js";
+import {notFound, errorHandler} from './middleware/error.js';
 
 dotenv.config();
 
+connectDB();
+
 const app = express();
 
-app.get("/proshop/products", (req, res, next) => {
-  res.json(products);
-});
+app.use("/proshop/products", productRoutes);
 
-app.get("/proshop/product/:id", (req, res, next) => {
-  const prodId = req.params.id;
-  const product = products.find((p) => p._id === prodId);
-  res.json(product);
-});
+app.use(notFound);
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(
   PORT,
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
+  console.log(
+    `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold
+  )
 );
