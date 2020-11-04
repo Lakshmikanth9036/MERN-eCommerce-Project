@@ -4,6 +4,7 @@ import colors from "colors";
 import connectDB from "./config/db.js";
 import productRoutes from "./routes/products.js";
 import userRoutes from "./routes/users.js";
+import orderRoutes from "./routes/order.js";
 import { notFound, errorHandler } from "./middleware/error.js";
 
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use("/proshop/products", productRoutes);
 app.use("/proshop/users", userRoutes);
+app.use("/proshop/orders", orderRoutes);
 
 app.use(notFound);
 
