@@ -19,6 +19,10 @@ app.use("/proshop/products", productRoutes);
 app.use("/proshop/users", userRoutes);
 app.use("/proshop/orders", orderRoutes);
 
+app.get("/proshop/config/paypal", (req, res) => {
+  res.send(process.env.PAYPAL_CLIENT_ID);
+});
+
 app.use(notFound);
 
 app.use(errorHandler);
