@@ -34,28 +34,29 @@ const registerUser = asyncHandler(async (req, res, next) => {
   const { name, email, password } = req.body;
   const userExists = await User.findOne({ email });
 
-  if(userExists){
-      res.status(400)
-      throw new Error('User already exists');
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists");
   }
 
   const user = await User.create({
-      name, email, password
-  })
+    name,
+    email,
+    password,
+  });
 
-  if(user) {
+  if (user) {
     res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(400);
-      throw new Error("Invalid user data");
-    }
- 
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(400);
+    throw new Error("Invalid user data");
+  }
 });
 
 /**
@@ -88,9 +89,9 @@ const updateUserProfile = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
   const user = await User.findById(userId);
   if (user) {
-    user.name = req.body.name || user.name
-    user.email = req.body.email || user.email
-    if(req.body.password){
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    if (req.body.password) {
       user.password = req.body.password;
     }
     const updatedUser = await user.save();
@@ -107,4 +108,81 @@ const updateUserProfile = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { authUser, registerUser ,getUserProfile, updateUserProfile };
+/**
+ * @desc   Get all users
+ * @route  GET /proshop/users
+ * @access Private/Admin
+ */
+const getUsers = asyncHandler(async (req, res, next) => {
+  const users = await User.find();
+  res.json(users);
+});
+
+/**
+ * @desc   Delete user
+ * @route  DELETE /proshop/users/:id
+ * @access Private/Admin
+ */
+const deleteUser = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (user) {
+    await user.remove();
+    res.json({
+      message: "User removed.",
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found.");
+  }
+});
+
+/**
+ * @desc   Get user by ID
+ * @route  GET /proshop/users/:id
+ * @access Private/Admin
+ */
+const getUserById = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id).select("-password");
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404);
+    throw new Error("User not found.");
+  }
+});
+
+/**
+ * @desc   Update user
+ * @route  PUT /proshop/users/:id
+ * @access Private/Admin
+ */
+const updateUser = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (user) {
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.isAdmin = req.body.isAdmin === undefined ? user.isAdmin : req.body.isAdmin;
+
+    const updatedUser = await user.save();
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found.");
+  }
+});
+
+export {
+  authUser,
+  registerUser,
+  getUserProfile,
+  updateUserProfile,
+  getUsers,
+  deleteUser,
+  getUserById,
+  updateUser,
+};
