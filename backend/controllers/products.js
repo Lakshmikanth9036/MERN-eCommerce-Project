@@ -1,15 +1,29 @@
 import asyncHandler from "express-async-handler";
 
 import Product from "../models/product.js";
+import Order from "../models/order.js";
 
 /**
  * @desc Fetch all products
  * @route GET /proshop/products
  * @access Public
  */
-const getProducts = asyncHandler(async (req, res, next) => {
-  const products = await Product.find();
-  res.json(products);
+const getProducts = asyncHandler(async (req, res) => {
+  const pageSize = 10;
+  const page = Number(req.query.pageNumber) || 1;
+  const keyword = req.query.keyword
+    ? {
+        name: {
+          $regex: req.query.keyword,
+          $options: "i",
+        },
+      }
+    : {};
+  const count = await Product.countDocuments({ ...keyword });
+  const products = await Product.find({ ...keyword })
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+  res.json({ products, page, pages: Math.ceil(count / pageSize) });
 });
 
 /**
@@ -101,10 +115,80 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 });
 
+/*
+ * @desc Create new review
+ * @route POST /proshop/products/:id/reviews
+ * @access Private/Admin
+ */
+const createProductReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body;
+
+  const product = await Product.findById(req.params.id);
+  const orders = await Order.find({ user: req.user._id });
+
+  if (product) {
+    const alreadyReviewed = product.reviews.find(
+      (r) => r.user.toString() === req.user._id.toString()
+    );
+
+    const userOrder = orders.map((order) => {
+      const ord = order.orderItems.filter(
+        (o) => o.product.toString() === req.params.id.toString()
+      );
+      return ord.length ? ord[0] : null;
+    });
+    const isOrdered = userOrder.find((uo) => uo !== null);
+
+    if (!isOrdered) {
+      res.status(400);
+      throw new Error(
+        "You are not allow to review this product since you haven't bought it."
+      );
+    }
+
+    if (alreadyReviewed) {
+      res.status(400);
+      throw new Error("Product already reviewed.");
+    }
+    const review = {
+      name: req.user.name,
+      rating: Number(rating),
+      comment,
+      user: req.user._id,
+    };
+
+    product.reviews.push(review);
+    product.numReviews = product.reviews.length;
+
+    product.rating =
+      product.reviews.reduce((acc, item) => +item.rating + acc, 0) /
+      product.reviews.length;
+
+    await product.save();
+
+    res.status(201).json({ message: "Review added" });
+  } else {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+});
+
+/*
+ * @desc Get top rated products
+ * @route GET /proshop/products/top
+ * @access Public
+ */
+const getTopProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({}).sort({ rating: -1 }).limit(3);
+  res.json(products);
+});
+
 export {
   getProducts,
   getProductById,
   deleteProduct,
   createProduct,
   updateProduct,
+  createProductReview,
+  getTopProducts
 };

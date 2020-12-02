@@ -1,11 +1,12 @@
 import React from "react";
+import SearchBox from "./SearchBox";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { logout } from "../store/actions/userActions";
+import { Route } from "react-router-dom";
 
 const Header = () => {
-
   const dispatch = useDispatch();
 
   const userLogin = useSelector((state) => state.userLogin);
@@ -13,7 +14,7 @@ const Header = () => {
 
   const logoutHandler = () => {
     dispatch(logout());
-  }
+  };
 
   return (
     <header>
@@ -24,6 +25,7 @@ const Header = () => {
           </LinkContainer>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
+            <Route render={({ history }) => <SearchBox history={history} />} />
             <Nav className="ml-auto">
               <LinkContainer to="/cart">
                 <Nav.Link>
@@ -36,7 +38,9 @@ const Header = () => {
                     <NavDropdown.Item>Profile</NavDropdown.Item>
                   </LinkContainer>
 
-                  <NavDropdown.Item onClick={logoutHandler}>Logout</NavDropdown.Item>
+                  <NavDropdown.Item onClick={logoutHandler}>
+                    Logout
+                  </NavDropdown.Item>
                 </NavDropdown>
               ) : (
                 <LinkContainer to="/login">

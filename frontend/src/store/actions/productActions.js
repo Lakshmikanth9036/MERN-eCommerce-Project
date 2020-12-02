@@ -1,10 +1,14 @@
 import * as actionType from "./actionTypes";
 import axios from "axios";
 
-export const listProducts = () => async (dispatch) => {
+export const listProducts = (keyword = "", pageNumber = "") => async (
+  dispatch
+) => {
   try {
     dispatch({ type: actionType.PRODUCT_LIST_REQUEST });
-    const { data } = await axios.get("/proshop/products");
+    const { data } = await axios.get(
+      `/proshop/products?keyword=${keyword}&pageNumber=${pageNumber}`
+    );
     dispatch({ type: actionType.PRODUCT_LIST_SUCCESS, payload: data });
   } catch (err) {
     dispatch({
@@ -122,6 +126,60 @@ export const updateProduct = (product) => async (dispatch, getState) => {
   } catch (err) {
     dispatch({
       type: actionType.PRODUCT_UPDATE_FAIL,
+      payload:
+        err.response && err.response.data.message
+          ? err.response.data.message
+          : err.message,
+    });
+  }
+};
+
+export const createProductReview = (productId, review) => async (
+  dispatch,
+  getState
+) => {
+  try {
+    dispatch({
+      type: actionType.PRODUCT_CREATE_REVIEW_REQUEST,
+    });
+
+    const {
+      userLogin: { userInfo },
+    } = getState();
+
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userInfo.token}`,
+      },
+    };
+    await axios.post(`/proshop/products/${productId}/reviews`, review, config);
+    dispatch({
+      type: actionType.PRODUCT_CREATE_REVIEW_SUCCESS,
+    });
+  } catch (err) {
+    dispatch({
+      type: actionType.PRODUCT_CREATE_REVIEW_FAIL,
+      payload:
+        err.response && err.response.data.message
+          ? err.response.data.message
+          : err.message,
+    });
+  }
+};
+
+export const listTopProducts = () => async (
+  dispatch
+) => {
+  try {
+    dispatch({ type: actionType.PRODUCT_TOP_REQUEST });
+    const { data } = await axios.get(
+      `/proshop/products/top`
+    );
+    dispatch({ type: actionType.PRODUCT_TOP_SUCCESS, payload: data });
+  } catch (err) {
+    dispatch({
+      type: actionType.PRODUCT_TOP_FAIL,
       payload:
         err.response && err.response.data.message
           ? err.response.data.message
